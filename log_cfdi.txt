@@ -1,0 +1,78 @@
+2025-05-12 14:50:24,466 - INFO - === Inicio del log CFDI ===
+2025-05-12 14:50:24,474 - ERROR - Error al construir la configuración: XSAConfig.__init__() missing 1 required positional argument: 'idSucursal'
+2025-05-12 16:29:49,087 - INFO - === Inicio del log CFDI ===
+2025-05-12 16:32:18,283 - INFO - === Inicio del log CFDI ===
+2025-05-12 16:32:18,289 - ERROR - Error al construir la configuración: XSAConfig.__init__() missing 1 required positional argument: 'idSucursal'
+2025-05-12 16:32:49,248 - INFO - === Inicio del log CFDI ===
+2025-05-12 16:34:57,072 - INFO - Nuevo archivo: SourceFile.xml
+2025-05-12 16:35:24,697 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 16:35:40,172 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-12 16:37:46,064 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\SourceFile.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
+2025-05-12 16:47:21,118 - INFO - === Inicio del log CFDI ===
+2025-05-12 16:47:52,029 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-12 16:48:03,686 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 16:48:06,491 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-12 16:49:54,464 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: cannot access local variable 'file_path_temp' where it is not associated with a value
+2025-05-12 16:52:49,267 - INFO - === Inicio del log CFDI ===
+2025-05-12 16:53:41,212 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-12 16:53:42,776 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 16:53:44,087 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-12 16:53:53,992 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: send_email() missing 1 required positional argument: 'error_message'
+2025-05-12 16:55:38,598 - INFO - === Inicio del log CFDI ===
+2025-05-12 16:55:58,380 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-12 16:55:59,549 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 16:56:00,467 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-12 17:28:34,982 - INFO - === Inicio del log CFDI ===
+2025-05-12 17:28:55,470 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-12 17:28:56,650 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 17:28:57,622 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-12 17:29:46,366 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
+2025-05-12 17:40:48,004 - INFO - === Inicio del log CFDI ===
+2025-05-12 17:41:11,198 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-12 17:41:12,148 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 17:41:13,850 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-12 17:53:11,912 - INFO - === Inicio del log CFDI ===
+2025-05-12 17:53:33,593 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-12 17:53:34,802 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 17:53:36,028 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-12 17:54:32,903 - ERROR - Error de autenticación SMTP: (535, b'Authentication Credentials Invalid')
+2025-05-12 17:54:45,330 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
+2025-05-12 18:47:14,159 - INFO - === Inicio del log CFDI ===
+2025-05-12 18:49:25,036 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-12 18:49:26,331 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 18:49:27,425 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-12 18:51:29,136 - ERROR - Error de autenticación SMTP: (535, b'Authentication Credentials Invalid')
+2025-05-12 18:51:48,678 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
+2025-05-12 19:07:02,701 - INFO - === Inicio del log CFDI ===
+2025-05-12 19:07:29,459 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-12 19:07:30,345 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-12 19:07:31,259 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-13 08:36:25,596 - INFO - === Inicio del log CFDI ===
+2025-05-13 08:37:56,231 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-13 08:37:57,597 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-13 08:37:59,430 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-13 08:39:09,775 - INFO - Correo enviado exitosamente.
+2025-05-13 08:39:22,398 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
+2025-05-13 09:01:05,711 - INFO - === Inicio del log CFDI ===
+2025-05-13 09:01:42,065 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-13 09:01:44,074 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-13 09:01:46,227 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-13 09:03:07,067 - INFO - Correo enviado exitosamente.
+2025-05-13 09:03:10,699 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
+2025-05-13 09:34:04,401 - INFO - === Inicio del log CFDI ===
+2025-05-13 09:34:57,561 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-13 09:34:58,907 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-13 09:35:00,057 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-13 09:35:48,976 - INFO - Correo enviado exitosamente.
+2025-05-13 09:35:52,683 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
+2025-05-13 09:43:20,985 - INFO - === Inicio del log CFDI ===
+2025-05-13 09:43:35,365 - INFO - Nuevo archivo: SourceFile.xml
+2025-05-13 09:43:36,495 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-13 09:43:37,598 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-13 09:43:48,304 - INFO - Correo enviado exitosamente.
+2025-05-13 09:45:06,253 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\SourceFile.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
+2025-05-13 09:45:08,341 - INFO - Nuevo archivo: MIMGLOMEX_INV_00001000_ORGPRUMEX.xml
+2025-05-13 09:45:27,365 - INFO - Archivo 'MIMGLOMEX_INV_00001000_ORGPRUMEX.xml' renombrado éxito.
+2025-05-13 09:45:28,454 - INFO - Obteniendo datos de Organización: MIMGLOMEX
+2025-05-13 09:45:36,439 - INFO - Correo enviado exitosamente.
+2025-05-13 09:45:39,385 - ERROR - Error procesando archivo d:\PYTHON-PROYECT\APP_DETECTA_ARCHIVOS_RUTA\MIMGLOMEX_INV_00001000_ORGPRUMEX.xml: ERROR: 400 Client Error: Bad Request for url: http://canal2.xsa.com.mx:9050/123ertghjtg553/cfdis
