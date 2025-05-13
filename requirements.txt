@@ -1,0 +1,3 @@
+watchdog
+num2words
+requests

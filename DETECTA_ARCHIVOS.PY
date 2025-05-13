@@ -40,9 +40,14 @@ class OrganizacionConfig:
     xsa: XSAConfig
     notificacionesError: List[str]
     edocs: EDocsConfig
-    
-# Ruta base del script
-base_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Obtener la ubicación donde está guardado el .exe o script
+if getattr(sys, 'frozen', False):
+    # Si está empaquetado como exe
+    base_dir = os.path.dirname(sys.executable)
+else:
+    # Si es un script .py
+    base_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Rutas absolutas
 log_path = os.path.join(base_dir, "log_cfdi.txt")
@@ -190,12 +195,17 @@ def generacion_cfdi(data_nodo: dict, path: str) -> str:
             raise Exception(f"ERROR: {str(ex)}")
     
 def read_xml_schemas(xml_path: str)-> str:
-    # Cargar el archivo XML
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-    # Definir el namespace
-    ns = {'ns': 'http://www.cargowise.com/Schemas/Universal/2011/11'}
-    return ns,root,tree
+    try:
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        ns = {'ns': 'http://www.cargowise.com/Schemas/Universal/2011/11'}
+        return ns, root, tree
+    except PermissionError as e:
+        logging.error(f"Permiso denegado al leer {xml_path}: {e}")
+        raise
+    except Exception as e:
+        logging.error(f"Error general al leer {xml_path}: {e}")
+        raise
 
 def read_xml(path: str) -> str:
     try:
@@ -376,14 +386,22 @@ class Manejador(FileSystemEventHandler):
         if not event.is_directory and event.src_path.lower().endswith('.xml'):
                     
             logging.info(f"Nuevo archivo: {os.path.basename(event.src_path)}")
-            try:
-                ns, root , tree = read_xml_schemas(event.src_path)
-                data_nodo = getTransactionInfoData(ns, root)
-                agregar_importe_letra(event.src_path)
-                generacion_cfdi(data_nodo,event.src_path)
-                
-            except Exception as e:
-                logging.error(f"Error procesando archivo {event.src_path}: {e}")
+            # Espera a que el archivo esté completamente disponible
+            retries = 5
+            while retries > 0:
+                try:
+                    ns, root, tree = read_xml_schemas(event.src_path)
+                    data_nodo = getTransactionInfoData(ns, root)
+                    agregar_importe_letra(event.src_path)
+                    generacion_cfdi(data_nodo, event.src_path)
+                    break
+                except PermissionError:
+                    logging.error(f"Permiso denegado al procesar {event.src_path}, intentando nuevamente.")
+                    retries -= 1
+                    time.sleep(1)  # Espera antes de reintentar
+                except Exception as e:
+                    logging.error(f"Error procesando archivo {event.src_path}: {e}")
+                    break
 
 if __name__ == "__main__":
     observer_path = base_dir
