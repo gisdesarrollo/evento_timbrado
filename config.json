@@ -6,31 +6,32 @@
           "server": "http://canal2.xsa.com.mx",
           "key": "123ertghjtg553",
           "tipoDocumento": "12edec32lij123iuh3iub",
-		  "idSucursal": "22edec32lij123iuh3iub"
+          "idSucursal": "22edec32lij123iuh3iub"
         },
         "notificacionesError": [
-          "alexander.garcia@gisconsultoria.com"
+          "alexander.garcia@gisconsultoria.com",
+          "eduardo.ayala@gisconsultoria.com"
         ],
         "eDocs": {
-			"cwemail" : "alexander.garcia@gisconsultoria.com",
-			"etiquetaDocumento": "DPR"
+          "cwemail": "mimpo.cw1@mimpo.com",
+          "etiquetaDocumento": "PVR"
         }
       },
-	  "SENATOR": {
+      "SENATOR": {
         "xsa": {
           "server": "http://canal2.xsa.com.mx",
           "key": "123ertghjtg553",
           "tipoDocumento": "12edec32lij123iuh3iub",
-		  "idSucursal": "22edec32lij123iuh3iub"
+          "idSucursal": "22edec32lij123iuh3iub"
         },
         "notificacionesError": [
           "alexander.garcia@gisconsultoria.com"
         ],
         "eDocs": {
-			"cwemail" : "alexander.garcia@gisconsultoria.com",
-			"etiquetaDocumento": "DPR"
+          "cwemail": "alexander.garcia@gisconsultoria.com",
+          "etiquetaDocumento": "DPR"
         }
       }
-	}
+    }
   }
 }

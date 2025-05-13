@@ -216,14 +216,14 @@ def read_xml(path: str) -> str:
         logging.error(f"Archivo no encontrado: {path}")
     except Exception as e:
         logging.error(f"Error al leer el archivo: {e}")
-
         
 def getTransactionInfoData(ns: dict, root: ET.Element) -> dict:
     data = {
         "BranchOrganizationCode": None,
         "TransactionType": None,
         "Number": None,
-        "OrganizationOrganizationCode": None
+        "OrganizationOrganizationCode": None,
+        "Shipment": None
     }
 
     # BranchAddress/OrganizationCode
@@ -262,6 +262,15 @@ def getTransactionInfoData(ns: dict, root: ET.Element) -> dict:
     except Exception as e:
         logging.error(f"Error obteniendo OrganizationOrganizationCode: {e}")
 
+    # Shipment
+    try:
+        node = root.find('.//ns:TransactionInfo/ns:Description', ns)
+        data["Shipment"] = node.text if node is not None else None
+        if node is None:
+            raise ValueError("Nodo Description no encontrado")
+    except Exception as e:
+        logging.error(f"Error obteniendo Description: {e}")
+
     return data
 
 def agregar_importe_letra(xml_path: str):
@@ -298,7 +307,7 @@ def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_
         data = DataSmtp()
         # Datos del correo
         SENDER_EMAIL = "facturas@applikt.com"
-        SENDER_NAME = "Facturación Applikt"
+        SENDER_NAME = "Facturación CW - XSA"
         SUBJECT = "Resultado del procesamiento de documento"
         
         # Contenido del mensaje
@@ -348,6 +357,8 @@ def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_
 
         logging.info("Correo enviado exitosamente.")
 
+
+    
     except FileNotFoundError as e:
         logging.error(f"No se encontró el archivo XML '{file_path_temp}': {e}")
     except smtplib.SMTPAuthenticationError as e:
@@ -357,6 +368,81 @@ def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_
     except Exception as e:
         logging.error("Error inesperado al enviar el correo: %s", e)
 
+def send_email_cargowise(
+    eDocs: EDocsConfig, 
+    email_error: List[str], 
+    file_path_temp: str, 
+    nombre_archivo: str, 
+    status: str, 
+    error_message: str,
+    transaction_info: dict
+    ):
+    
+    try:
+        shipment = transaction_info.get("Shipment", "No disponible")
+        eDocName = [eDocs.etiquetaDocumento]
+        data = DataSmtp()
+        # Datos del correo
+        SENDER_EMAIL = "facturas@applikt.com"
+        SENDER_NAME = "Facturación CW - XSA"
+        SUBJECT = "[ediDocManager SHP " + eDocName + " " + shipment + "]"
+        SUBJECT = "Resultado del procesamiento de documento"
+        
+        # Contenido del mensaje
+        if status == "OK":
+            recipients = [eDocs.cwemail]
+            html_body = f"""\
+            <html>
+            <body>
+            </body>
+            </html>"""
+        else:
+            recipients = email_error
+            html_body = f"""\
+            <html>
+            <body>
+                <h2>Error en el procesamiento</h2>
+                <p><strong>Nombre del documento:</strong> {nombre_archivo}</p>
+                <p><strong>Descripción:</strong> {error_message}</p>
+            </body>
+            </html>"""
+
+        # Crear mensaje
+        msg = MIMEMultipart()
+        msg['Subject'] = SUBJECT
+        msg['From'] = formataddr((SENDER_NAME, SENDER_EMAIL))
+        msg['To'] = ", ".join(recipients)
+        msg['X-SES-CONFIGURATION-SET'] = data.configset
+        msg.attach(MIMEText(html_body, "html"))
+
+        # Adjuntar archivo si fue exitoso
+        if status == "OK" and os.path.exists(file_path_temp):
+            with open(file_path_temp, "rb") as f:
+                attachment = MIMEApplication(f.read())
+                attachment.add_header('Content-Disposition', 'attachment', filename=nombre_archivo)
+                msg.attach(attachment)
+        
+
+        # Enviar correo usando STARTTLS
+        with smtplib.SMTP(data.smtp_host, data.smtp_port) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()  # Re-identificación
+            server.login(data.smtp_username, data.smtp_password)
+            server.sendmail(SENDER_EMAIL, recipients, msg.as_string())
+
+        logging.info("Correo enviado exitosamente.")
+
+
+    
+    except FileNotFoundError as e:
+        logging.error(f"No se encontró el archivo XML '{file_path_temp}': {e}")
+    except smtplib.SMTPAuthenticationError as e:
+        logging.error("Error de autenticación SMTP: %s", e)
+    except smtplib.SMTPException as e:
+        logging.error("Error SMTP al enviar el correo: %s", e)
+    except Exception as e:
+        logging.error("Error inesperado al enviar el correo: %s", e)
 
 def download_file(url, nombre_archivo):
     try:
@@ -378,7 +464,6 @@ def download_file(url, nombre_archivo):
     except Exception as e:
         logging.error(f"Error al descargar el archivo: {e}")
         return None
-
 
 #evento se activa cada ves que llega un nuevo xml ala carpeta      
 class Manejador(FileSystemEventHandler):
