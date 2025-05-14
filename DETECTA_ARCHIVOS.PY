@@ -156,7 +156,8 @@ def generacion_cfdi(data_nodo: dict, path: str) -> str:
 
         json_string = json.dumps(data_json_xsa.__dict__)
         status_text = "ERROR"
-        file_path_temp = ""
+        file_path_temp_xml = ""
+        file_path_temp_pdf = ""
         try:
             response = requests.put(
                 url_xsa,
@@ -175,14 +176,17 @@ def generacion_cfdi(data_nodo: dict, path: str) -> str:
                 
                 data_json = json.loads(response.text)  # Convertir a diccionario
                 xml_url = f"{xsa.server}:9050" + data_json.get("xmlDownload")
-                file_path_temp = download_file(xml_url, nombre_archivo)
-                send_email(email_successful,email_error,file_path_temp,nombre_archivo,status_text,"")
+                pdf_url = f"{xsa.server}:9050" + data_json.get("pdfDownload")
+                file_path_temp_xml = download_file(xml_url, nombre_archivo)
+                nombre_archivo_pdf = os.path.splitext(nombre_archivo)[0]
+                file_path_temp_pdf = download_file(pdf_url, f"{nombre_archivo_pdf}.pdf")
+                send_email(email_successful,email_error,file_path_temp_xml,file_path_temp_pdf,nombre_archivo,status_text,"")
                 return data_json
             else:
                 logging.info(f"FALLÓ con status {response.status_code}: {response.text}")
                 shutil.move(path, os.path.join(carpeta_errores, nombre_archivo))
                 status_text = "ERROR"
-                send_email(email_successful,email_error,file_path_temp,nombre_archivo,status_text,response.text)
+                send_email(email_successful,email_error,file_path_temp_xml,file_path_temp_pdf,nombre_archivo,status_text,response.text)
                 
                 return {
                     "error": f"FALLÓ con status {response.status_code}",
@@ -191,7 +195,7 @@ def generacion_cfdi(data_nodo: dict, path: str) -> str:
         except requests.exceptions.RequestException as ex:
             shutil.move(path, os.path.join(carpeta_errores, nombre_archivo))
             status_text = "ERROR"
-            send_email(email_successful,email_error,file_path_temp,nombre_archivo,status_text,"Error Interno")
+            send_email(email_successful,email_error,file_path_temp_xml,file_path_temp_pdf,nombre_archivo,status_text,"Error Interno")
             raise Exception(f"ERROR: {str(ex)}")
     
 def read_xml_schemas(xml_path: str)-> str:
@@ -302,7 +306,7 @@ def agregar_importe_letra(xml_path: str):
     transaction_info.append(importe_letra_node)
     tree.write(xml_path, encoding='utf-8', xml_declaration=True)
     
-def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_temp: str, nombre_archivo: str, status: str, error_message: str):
+def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_temp_xml: str, file_path_temp_pdf: str, nombre_archivo: str, status: str, error_message: str):
     try:
         data = DataSmtp()
         # Datos del correo
@@ -340,11 +344,23 @@ def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_
         msg.attach(MIMEText(html_body, "html"))
 
         # Adjuntar archivo si fue exitoso
-        if status == "OK" and os.path.exists(file_path_temp):
-            with open(file_path_temp, "rb") as f:
-                attachment = MIMEApplication(f.read())
-                attachment.add_header('Content-Disposition', 'attachment', filename=nombre_archivo)
-                msg.attach(attachment)
+        if status == "OK" and os.path.exists(file_path_temp_xml) and os.path.exists(file_path_temp_pdf):
+            if os.path.exists(file_path_temp_xml):
+                with open(file_path_temp_xml, "rb") as f:
+                    attachment = MIMEApplication(f.read())
+                    attachment.add_header('Content-Disposition', 'attachment', filename=f"{nombre_archivo}.xml")
+                    msg.attach(attachment)
+            else:
+                logging.warning(f"Archivo XML no encontrado: {file_path_temp_xml}")
+            nombre_archivo_pdf = os.path.splitext(nombre_archivo)[0]
+            if os.path.exists(file_path_temp_pdf):
+                with open(file_path_temp_pdf, "rb") as f:
+                    attachment = MIMEApplication(f.read())
+                    attachment.add_header('Content-Disposition', 'attachment', filename=f"{nombre_archivo_pdf}.pdf")
+                    msg.attach(attachment)
+            else:
+                logging.warning(f"Archivo PDF no encontrado: {file_path_temp_pdf}")
+
         
 
         # Enviar correo usando STARTTLS
@@ -360,7 +376,7 @@ def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_
 
     
     except FileNotFoundError as e:
-        logging.error(f"No se encontró el archivo XML '{file_path_temp}': {e}")
+        logging.error(f"No se encontró uno de los archivos: {e}")
     except smtplib.SMTPAuthenticationError as e:
         logging.error("Error de autenticación SMTP: %s", e)
     except smtplib.SMTPException as e:
@@ -371,7 +387,8 @@ def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_
 def send_email_cargowise(
     eDocs: EDocsConfig, 
     email_error: List[str], 
-    file_path_temp: str, 
+    file_path_temp_xml: str,
+    file_path_temp_pdf: str,
     nombre_archivo: str, 
     status: str, 
     error_message: str,
@@ -416,12 +433,24 @@ def send_email_cargowise(
         msg.attach(MIMEText(html_body, "html"))
 
         # Adjuntar archivo si fue exitoso
-        if status == "OK" and os.path.exists(file_path_temp):
-            with open(file_path_temp, "rb") as f:
-                attachment = MIMEApplication(f.read())
-                attachment.add_header('Content-Disposition', 'attachment', filename=nombre_archivo)
-                msg.attach(attachment)
-        
+        # Adjuntar archivo si fue exitoso
+        if status == "OK" and os.path.exists(file_path_temp_xml) and os.path.exists(file_path_temp_pdf):
+            if os.path.exists(file_path_temp_xml):
+                with open(file_path_temp_xml, "rb") as f:
+                    attachment = MIMEApplication(f.read())
+                    attachment.add_header('Content-Disposition', 'attachment', filename=f"{nombre_archivo}.xml")
+                    msg.attach(attachment)
+            else:
+                logging.warning(f"Archivo XML no encontrado: {file_path_temp_xml}")
+            nombre_archivo_pdf = os.path.splitext(nombre_archivo)[0]
+            if os.path.exists(file_path_temp_pdf):
+                with open(file_path_temp_pdf, "rb") as f:
+                    attachment = MIMEApplication(f.read())
+                    attachment.add_header('Content-Disposition', 'attachment', filename=f"{nombre_archivo_pdf}.pdf")
+                    msg.attach(attachment)
+            else:
+                logging.warning(f"Archivo PDF no encontrado: {file_path_temp_pdf}")
+
 
         # Enviar correo usando STARTTLS
         with smtplib.SMTP(data.smtp_host, data.smtp_port) as server:
@@ -436,7 +465,7 @@ def send_email_cargowise(
 
     
     except FileNotFoundError as e:
-        logging.error(f"No se encontró el archivo XML '{file_path_temp}': {e}")
+        logging.error(f"No se encontró uno de los archivos: {e}")
     except smtplib.SMTPAuthenticationError as e:
         logging.error("Error de autenticación SMTP: %s", e)
     except smtplib.SMTPException as e:
