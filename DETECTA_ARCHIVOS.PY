@@ -20,6 +20,7 @@ import shutil
 import logging
 import smtplib
 import tempfile
+import re
 
 
 @dataclass
@@ -117,7 +118,8 @@ def leer_configuracion_json(path: str) -> List['OrganizacionConfig']:
         sys.exit(1)
 
 configs = leer_configuracion_json(json_path)
-def generacion_cfdi(data_nodo: dict, path: str) -> str:
+
+def generacion_cfdi(data_nodo: dict, path: str, org_config) -> dict:
     carpeta_enviados = os.path.join(carpeta_respaldo, "enviados")
     carpeta_errores = os.path.join(carpeta_respaldo, "errores")
     
@@ -129,75 +131,106 @@ def generacion_cfdi(data_nodo: dict, path: str) -> str:
     nombre_archivo = f"{organizationCodeBranchAddress}_{transactionType}_{number}_{organizationCodeOrganizationAddress}.xml"
     logging.info(f"Archivo '{nombre_archivo}' renombrado éxito.")
     
-    #contenido xml
+    # Leer contenido XML y limpiar espacios
     contenido = read_xml(path)
-    #**** Obtener la lista de organizaciones JSON****
-    for org_config in configs:
-        logging.info(f"Obteniendo datos de Organización: {org_config.nombre}")  
-        xsa = org_config.xsa
-        email_error = org_config.notificacionesError
-        email_successful = org_config.edocs
-        
-        if not xsa.key:
-            raise Exception("Error: Key NULL")
-        if not xsa.tipoDocumento:
-            raise Exception("Error: Tipo Documento XSA NULL")
-        if not xsa.idSucursal:
-            raise Exception("Error: Id Sucursal XSA NULL")
+    xml_string = re.sub(r'>\s+<', '><', contenido.strip())
 
-        url_xsa = f"{xsa.server}:9050/{xsa.key}/cfdis"
+    resultados = {}
     
-        data_json_xsa = DataRequest(
-            idSucursal=xsa.idSucursal,
-            idTipoCfd=xsa.tipoDocumento,
-            nombre=nombre_archivo,
-            archivoFuente=contenido
+    logging.info(f"Procesando organización: {org_config.nombre}")  
+    xsa = org_config.xsa
+    email_error = org_config.notificacionesError
+    email_successful = org_config.edocs
+
+    # Validaciones básicas
+    if not xsa.key:
+        logging.error("Error: Key NULL")
+        resultados[org_config.nombre] = {"error": "Key NULL"}
+        return resultados
+    if not xsa.tipoDocumento:
+        logging.error("Error: Tipo Documento XSA NULL")
+        resultados[org_config.nombre] = {"error": "Tipo Documento XSA NULL"}
+        return resultados
+    if not xsa.idSucursal:
+        logging.error("Error: Id Sucursal XSA NULL")
+        resultados[org_config.nombre] = {"error": "Id Sucursal XSA NULL"}
+        return resultados
+
+    url_xsa = f"{xsa.server}:9050/{xsa.key}/cfdis"
+    
+    data_json_xsa = DataRequest(
+        idSucursal=xsa.idSucursal,
+        idTipoCfd=xsa.tipoDocumento,
+        nombre=nombre_archivo,
+        archivoFuente=xml_string
+    )
+
+    json_string = json.dumps(data_json_xsa.__dict__)
+    status_text = "ERROR"
+    file_path_temp_xml = ""
+    file_path_temp_pdf = ""
+
+    try:
+        response = requests.put(
+            url_xsa,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            data=json_string,
+            verify=False
         )
 
-        json_string = json.dumps(data_json_xsa.__dict__)
-        status_text = "ERROR"
-        file_path_temp_xml = ""
-        file_path_temp_pdf = ""
-        try:
-            response = requests.put(
-                url_xsa,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                data=json_string,
-                verify=False
-            )
-            response.raise_for_status()
-            if response.status_code == 200:
-                shutil.move(path, os.path.join(carpeta_enviados, nombre_archivo))
-                status_text = "OK"
-                logging.info(f"Archivo '{nombre_archivo}' timbrado con éxito.")
-                
-                data_json = json.loads(response.text)  # Convertir a diccionario
-                xml_url = f"{xsa.server}:9050" + data_json.get("xmlDownload")
-                pdf_url = f"{xsa.server}:9050" + data_json.get("pdfDownload")
-                file_path_temp_xml = download_file(xml_url, nombre_archivo)
-                nombre_archivo_pdf = os.path.splitext(nombre_archivo)[0]
-                file_path_temp_pdf = download_file(pdf_url, f"{nombre_archivo_pdf}.pdf")
-                send_email(email_successful,email_error,file_path_temp_xml,file_path_temp_pdf,nombre_archivo,status_text,"")
-                return data_json
-            else:
-                logging.info(f"FALLÓ con status {response.status_code}: {response.text}")
-                shutil.move(path, os.path.join(carpeta_errores, nombre_archivo))
-                status_text = "ERROR"
-                send_email(email_successful,email_error,file_path_temp_xml,file_path_temp_pdf,nombre_archivo,status_text,response.text)
-                
-                return {
-                    "error": f"FALLÓ con status {response.status_code}",
-                    "response_text": response.text
-                }
-        except requests.exceptions.RequestException as ex:
+        if response.status_code == 200:
+            shutil.move(path, os.path.join(carpeta_enviados, nombre_archivo))
+            status_text = "OK"
+            logging.info(f"Archivo '{nombre_archivo}' timbrado con éxito.")
+
+            data_json = json.loads(response.text)
+            xml_url = f"{xsa.server}:9050" + data_json.get("xmlDownload")
+            pdf_url = f"{xsa.server}:9050" + data_json.get("pdfDownload")
+            file_path_temp_xml = download_file(xml_url, nombre_archivo)
+            nombre_archivo_pdf = os.path.splitext(nombre_archivo)[0]
+            file_path_temp_pdf = download_file(pdf_url, f"{nombre_archivo_pdf}.pdf")
+
+            send_email(email_successful, email_error, file_path_temp_xml, file_path_temp_pdf, nombre_archivo, status_text, "")
+            resultados[org_config.nombre] = data_json
+
+        else:
+            logging.warning(f"FALLÓ con status {response.status_code}: {response.text}")
             shutil.move(path, os.path.join(carpeta_errores, nombre_archivo))
-            status_text = "ERROR"
-            send_email(email_successful,email_error,file_path_temp_xml,file_path_temp_pdf,nombre_archivo,status_text,"Error Interno")
-            raise Exception(f"ERROR: {str(ex)}")
-    
+
+            try:
+                error_json = response.json()
+                error_content = "\n".join(error_json.get('errors', [])) if 'errors' in error_json else response.text
+            except ValueError:
+                error_content = response.text
+
+            send_email(email_successful, email_error, file_path_temp_xml, file_path_temp_pdf, nombre_archivo, status_text, error_content)
+            resultados[org_config.nombre] = {
+                "status": response.status_code,
+                "error": error_content
+            }
+
+    except requests.exceptions.RequestException as ex:
+        if ex.response is not None:
+            try:
+                error_json = ex.response.json()
+                error_detail = "\n".join(error_json.get('errors', [])) if 'errors' in error_json else ex.response.text
+            except ValueError:
+                error_detail = ex.response.text
+        else:
+            error_detail = str(ex)
+
+        shutil.move(path, os.path.join(carpeta_errores, nombre_archivo))
+        send_email(email_successful, email_error, file_path_temp_xml, file_path_temp_pdf, nombre_archivo, status_text, error_detail)
+        resultados[org_config.nombre] = {
+            "exception": error_detail
+        }
+
+    return resultados
+
+
 def read_xml_schemas(xml_path: str)-> str:
     try:
         tree = ET.parse(xml_path)
@@ -371,7 +404,7 @@ def send_email(email_successful: EDocsConfig, email_error: List[str], file_path_
             server.login(data.smtp_username, data.smtp_password)
             server.sendmail(SENDER_EMAIL, recipients, msg.as_string())
 
-        logging.info("Correo enviado exitosamente.")
+        logging.info(f"Correo enviado exitosamente con notificacion {status} .")
 
 
     
@@ -498,24 +531,39 @@ def download_file(url, nombre_archivo):
 class Manejador(FileSystemEventHandler):
     def on_created(self, event):
         if not event.is_directory and event.src_path.lower().endswith('.xml'):
-                    
             logging.info(f"Nuevo archivo: {os.path.basename(event.src_path)}")
-            # Espera a que el archivo esté completamente disponible
+
             retries = 5
             while retries > 0:
                 try:
                     ns, root, tree = read_xml_schemas(event.src_path)
                     data_nodo = getTransactionInfoData(ns, root)
                     agregar_importe_letra(event.src_path)
-                    generacion_cfdi(data_nodo, event.src_path)
-                    break
+
+                    # Obtener el código de sucursal del XML
+                    branch_code = data_nodo.get("BranchOrganizationCode")
+
+                    if not branch_code:
+                        logging.error("No se encontró 'BranchOrganizationCode' en el archivo XML.")
+                        break
+
+                    # Buscar la configuración correspondiente en configs
+                    org_config = next((org for org in configs if org.nombre == branch_code), None)
+
+                    if org_config:
+                        resultado = generacion_cfdi(data_nodo, event.src_path, org_config)
+                        logging.info(f"Resultado para organización '{org_config.nombre}': {resultado}")
+                    else:
+                        logging.error(f"No se encontró configuración para la organización '{branch_code}'.")
+                    break 
                 except PermissionError:
                     logging.error(f"Permiso denegado al procesar {event.src_path}, intentando nuevamente.")
                     retries -= 1
-                    time.sleep(1)  # Espera antes de reintentar
+                    time.sleep(1)
                 except Exception as e:
                     logging.error(f"Error procesando archivo {event.src_path}: {e}")
                     break
+
 
 if __name__ == "__main__":
     observer_path = base_dir
