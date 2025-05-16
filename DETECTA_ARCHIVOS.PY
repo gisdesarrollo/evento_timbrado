@@ -10,6 +10,7 @@ from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from threading import Lock
 import requests
 import json
 import time
@@ -59,6 +60,8 @@ for sub in subcarpetas:
     ruta = os.path.join(carpeta_respaldo, sub)
     os.makedirs(ruta, exist_ok=True)
 
+procesados = set()
+lock = Lock()
 logging.basicConfig(
     filename=log_path,
     filemode='a',
@@ -527,43 +530,81 @@ def download_file(url, nombre_archivo):
         logging.error(f"Error al descargar el archivo: {e}")
         return None
 
+def wait_for_complete_write(file_path, timeout=10):
+    last_size = -1
+    stable_time = 0
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        try:
+            current_size = os.path.getsize(file_path)
+        except FileNotFoundError:
+            return False
+
+        if current_size == last_size:
+            stable_time += 1
+            if stable_time >= 2:  # tamaño estable por 2 segundos
+                return True
+        else:
+            stable_time = 0
+            last_size = current_size
+
+        time.sleep(1)
+
+    return False
+
 #evento se activa cada ves que llega un nuevo xml ala carpeta      
 class Manejador(FileSystemEventHandler):
     def on_created(self, event):
         if not event.is_directory and event.src_path.lower().endswith('.xml'):
-            logging.info(f"Nuevo archivo: {os.path.basename(event.src_path)}")
+            path = os.path.normpath(event.src_path)
+            logging.info(f"Nuevo archivo: {os.path.basename(path)}")
 
-            retries = 5
-            while retries > 0:
-                try:
-                    ns, root, tree = read_xml_schemas(event.src_path)
-                    data_nodo = getTransactionInfoData(ns, root)
-                    agregar_importe_letra(event.src_path)
+            with lock:
+                if path in procesados:
+                    logging.info(f"Archivo ya está siendo procesado: {path}")
+                    return
+                procesados.add(path)
 
-                    # Obtener el código de sucursal del XML
-                    branch_code = data_nodo.get("BranchOrganizationCode")
+            try:
+                if not wait_for_complete_write(path):
+                    logging.error(f"Timeout esperando que el archivo esté completo: {path}")
+                    return
 
-                    if not branch_code:
-                        logging.error("No se encontró 'BranchOrganizationCode' en el archivo XML.")
+                retries = 5
+                while retries > 0:
+                    try:
+                        ns, root, tree = read_xml_schemas(path)
+                        data_nodo = getTransactionInfoData(ns, root)
+                        agregar_importe_letra(path)
+
+                        branch_code = data_nodo.get("BranchOrganizationCode")
+                        if not branch_code:
+                            logging.error("No se encontró 'BranchOrganizationCode' en el archivo XML.")
+                            break
+
+                        org_config = next((org for org in configs if org.nombre == branch_code), None)
+                        if org_config:
+                            resultado = generacion_cfdi(data_nodo, path, org_config)
+                            logging.info(f"Resultado para organización '{org_config.nombre}': {resultado}")
+                        else:
+                            logging.error(f"No se encontró configuración para la organización '{branch_code}'.")
+                        break
+                    except PermissionError:
+                        logging.warning(f"Permiso denegado al procesar {path}, reintentando...")
+                    except Exception as e:
+                        logging.exception(f"Error procesando archivo {path}: {e}")
                         break
 
-                    # Buscar la configuración correspondiente en configs
-                    org_config = next((org for org in configs if org.nombre == branch_code), None)
-
-                    if org_config:
-                        resultado = generacion_cfdi(data_nodo, event.src_path, org_config)
-                        logging.info(f"Resultado para organización '{org_config.nombre}': {resultado}")
-                    else:
-                        logging.error(f"No se encontró configuración para la organización '{branch_code}'.")
-                    break 
-                except PermissionError:
-                    logging.error(f"Permiso denegado al procesar {event.src_path}, intentando nuevamente.")
                     retries -= 1
                     time.sleep(1)
-                except Exception as e:
-                    logging.error(f"Error procesando archivo {event.src_path}: {e}")
-                    break
 
+                if retries == 0:
+                    logging.error(f"No se pudo procesar el archivo después de varios intentos: {path}")
+
+            finally:
+                with lock:
+                    procesados.remove(path)
 
 if __name__ == "__main__":
     observer_path = base_dir
